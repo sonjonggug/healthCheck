@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chkDb">
+
+	<update id="chkDbMergeInto" parameterType="int" timeout="5">	
+		MERGE INTO TVO_BRANCH_EQ_STATUS_STAT
+		USING dual
+		ON ( BRANCH_CODE = 99999 AND AREA_CODE = 'ZZ' AND SERV_SEQ = 999 AND MODEL_CODE = '99999' )
+		WHEN MATCHED THEN
+		     UPDATE SET REC_BPM_MAX_TIME = '080000'
+		      WHERE BRANCH_CODE = 99999 
+				   AND AREA_CODE = 'ZZ' 
+				   AND SERV_SEQ = 999 
+				   AND MODEL_CODE = '99999'
+		WHEN NOT MATCHED THEN
+     	INSERT 
+			( 
+				COLLECTION_DATE
+				,COL_TIME
+				,CPU_AVG_USAGE
+				,CPU_MAX_USAGE
+				,CPU_MAX_USAGE_TIME
+				,MEMORY_AVG_USAGE
+				,MEMORY_MAX_USAGE
+				,MEMORY_MAX_USAGE_TIME
+				,REC_BPM_AVG
+				,REC_BPM_MAX
+				,REC_BPM_ACC
+				,REC_BPM_MAX_TIME
+				,REC_PPM_AVG
+				,REC_PPM_MAX
+				,REC_PPM_ACC
+				,REC_PPM_MAX_TIME
+				,BRANCH_CODE
+				,AREA_CODE
+		     	,SERV_SEQ
+				,MODEL_CODE
+			)
+		VALUES
+			(
+				to_char(sysdate,'yyyyMMdd')
+				,to_char(sysdate,'dd')
+				,0
+				,0
+				,'000000'
+				,0
+				,0
+				,'000000'
+				,0
+				,0
+				,0
+				,'000000'
+				,0
+				,0
+				,0
+				,'000000'
+			    ,99999
+			    ,'ZZ'
+			    ,999
+			    ,'99999'
+			)
+	</update>
+	<insert id="chkDbInsert" parameterType="chkDbVo">
+		INSERT INTO TVO_BRANCH_EQ_STATUS_STAT 
+			( 
+				COLLECTION_DATE
+				,COL_TIME
+				,CPU_AVG_USAGE
+				,CPU_MAX_USAGE
+				,CPU_MAX_USAGE_TIME
+				,MEMORY_AVG_USAGE
+				,MEMORY_MAX_USAGE
+				,MEMORY_MAX_USAGE_TIME
+				,REC_BPM_AVG
+				,REC_BPM_MAX
+				,REC_BPM_ACC
+				,REC_BPM_MAX_TIME
+				,REC_PPM_AVG
+				,REC_PPM_MAX
+				,REC_PPM_ACC
+				,REC_PPM_MAX_TIME
+				,BRANCH_CODE
+				,AREA_CODE
+		     	,SERV_SEQ
+				,MODEL_CODE
+			)
+		VALUES
+			(
+				to_char(sysdate,'yyyyMMdd')
+				,to_char(sysdate,'dd')
+				,0
+				,0
+				,'000000'
+				,0
+				,0
+				,'000000'
+				,0
+				,0
+				,0
+				,'000000'
+				,0
+				,0
+				,0
+				,'000000'
+			    ,99999
+			    ,'ZZ'
+			    ,999
+			    ,'99999'
+			)
+	</insert>
+	 
+	<update id="chkDbUpdate" parameterType="chkDbVo">
+		UPDATE TVO_BRANCH_EQ_STATUS_STAT
+		   SET REC_BPM_MAX_TIME = '080000' 
+		 WHERE BRANCH_CODE = 99999 
+		   AND AREA_CODE = 'ZZ' 
+		   AND SERV_SEQ = 999 
+		   AND MODEL_CODE = '99999'
+	</update>
+	
+	<delete id="chkDbDelete" parameterType="int">
+		DELETE FROM TVO_BRANCH_EQ_STATUS_STAT 
+		WHERE BRANCH_CODE = 99999 
+		AND AREA_CODE = 'ZZ' 
+		AND SERV_SEQ = 999 
+		AND MODEL_CODE = '99999'
+	</delete>
+	
+	<select id="chkDbTableSpSelect" parameterType="String" resultType="chkDbTableSpVo">
+		SELECT
+			SUBSTR(A.TABLESPACE_NAME,1,30) TABLESPACE
+			,ROUND(SUM(A.TOTAL1)/ 1024 / 1024, 1) TOTALSPACE
+			,ROUND(SUM(A.TOTAL1)/ 1024 / 1024, 1)-ROUND(SUM(A.SUM1)/ 1024 / 1024, 1) USESPACE
+			,ROUND(SUM(A.SUM1)/ 1024 / 1024, 1) FREESPACE
+			,ROUND((ROUND(SUM(A.TOTAL1)/ 1024 / 1024, 1)-ROUND(SUM(A.SUM1)/ 1024 / 1024, 1))/ ROUND(SUM(A.TOTAL1)/ 1024 / 1024, 1)* 100, 2) USEPERCENT
+		  FROM
+			(
+				SELECT
+					TABLESPACE_NAME,
+					0 TOTAL1,
+					SUM(BYTES) SUM1,
+					MAX(BYTES) MAXB,
+					COUNT(BYTES) CNT
+				FROM
+					DBA_FREE_SPACE
+				GROUP BY
+					TABLESPACE_NAME
+				UNION
+				SELECT
+					TABLESPACE_NAME,
+					SUM(BYTES) TOTAL1,
+					0,
+					0,
+					0
+				FROM
+					DBA_DATA_FILES
+				GROUP BY
+					TABLESPACE_NAME
+			) A
+			GROUP BY A.TABLESPACE_NAME
+			ORDER BY TABLESPACE
+	</select>
+	
+</mapper> 

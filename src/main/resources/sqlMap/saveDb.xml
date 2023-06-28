@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="saveDb">
+
+	<update id="saveDbMergeInto" parameterType="ServerStatusVo" timeout="5">	
+		MERGE 
+		  INTO NPA_MERGE_NGF.WD_SERVER WS
+		USING dual
+		   ON (WS.SID = #{sid})
+		 WHEN MATCHED THEN
+		      UPDATE
+		         SET  WS.NAME = #{name}
+		             ,WS.FARM_NAME = #{farm}
+		         	 ,WS.STATUS = #{status}
+		         	 ,WS.IP = #{ip}
+		         	 ,WS.CON_DATE = #{connDate}
+		             ,WS.BOOTING_DATE = #{bootingDate}
+		             ,WS.DESCRIPTION = #{desc}		             
+		 WHEN NOT MATCHED THEN
+		      INSERT (WS.SID, WS.NAME, WS.FARM_NAME , WS.STATUS , WS.IP , WS.CON_DATE , WS.BOOTING_DATE , WS.DESCRIPTION)
+		      VALUES (#{sid}, #{name}, #{farm} , #{status} , #{ip} , #{connDate} , #{bootingDate} , #{desc} )
+	</update>
+	
+	
+	<select id="selectProcList" parameterType="String" resultType="ProcStatusVo">	
+		SELECT  PROC_NAME AS procName
+			   ,PID AS pid
+			   ,PROC_ROUTE AS procRoute
+			   ,PROC_RUN AS procRun
+			   ,PROC_STATUS AS procStatus
+		   	   ,UP_TIME AS upTime
+	   		   ,DOWN_TIME AS downTime
+		FROM NPA_MERGE_NGF.WD_PROCESS
+			WHERE sid = #{sid} 
+	</select>
+	
+	<select id="selectDiskList" resultType="ResourceStatusVo">	
+		SELECT   RES_PATH AS resPath
+				,RID as rid
+		FROM NPA_MERGE_NGF.WD_RESOURCE
+			WHERE RES_TYPE = 'DISK' 
+	</select>	
+	
+	<update id="updateProcList" parameterType="ProcStatusVo" timeout="5">			  
+		    UPDATE NPA_MERGE_NGF.WD_PROCESS
+		        SET  PROC_STATUS = #{procStatus}
+		        <if test='upTime != null or !upTime.equals("")'>
+		        	,UP_TIME = #{upTime}
+		        </if>
+		        <if test='downTime != null or !downTime.equals("")'>
+		        	,DOWN_TIME = #{downTime}
+		        </if>		            		            
+				WHERE PID = #{pid}		        		            		    
+	</update>
+	
+	<insert id="insertProcList" parameterType="ProcStatusVo" timeout="5">			  
+		INSERT INTO NPA_MERGE_NGF.WD_PROCESS (PID, SID, PROC_NAME, PROC_ROUTE, PROC_RUN, PROC_STATUS)		
+			VALUES(#{pid}, #{sid}, #{procName}, #{procRoute}, #{procRun}, #{procStatus})	        		            		    
+	</insert>	
+	
+	<delete id="deleteProcList" parameterType="String" timeout="5">			  
+		   DELETE FROM WD_PROCESS WHERE SID = #{sid}        		            		    
+	</delete>	
+	
+	<update id="updateResource" parameterType="ResourceStatusVo" >	
+		MERGE 
+		  INTO NPA_MERGE_NGF.WD_RESOURCE WS
+		USING dual
+		   ON (WS.RID = '${rids}' )
+		 WHEN MATCHED THEN
+		      UPDATE
+		         SET  WS.RES_AVG = #{resAvg}
+		         	 ,WS.RES_PEAK = #{resPeak}
+		         	 ,WS.RES_STATE = #{resState}
+		         	 <if test='resPath != null or !resPath.equals("")'>
+		         	 ,WS.RES_PATH = #{resPath}
+		         	 </if>		             		             		             
+		 WHEN NOT MATCHED THEN
+		      INSERT (WS.RID , WS.SID , WS.RES_PATH , WS.RES_AVG , WS.RES_PEAK  , WS.RES_STATE , WS.RES_TYPE )
+		      VALUES (#{rid}, #{sid}, #{resPath} , #{resAvg} , #{resPeak} , #{resState} , #{resType} )
+	</update>
+	
+		<update id="updateDiskResource" parameterType="ResourceStatusVo" >	
+		      UPDATE NPA_MERGE_NGF.WD_RESOURCE
+		         SET  RES_AVG = #{resAvg}
+		         	 ,RES_PEAK = #{resPeak}
+		         	 ,RES_STATE = #{resState}		         	 		         	 
+		         WHERE RID = '${rid}'	 		             		             		             
+
+	</update>
+			
+	<insert id="insertDiskList" parameterType="ResourceStatusVo" timeout="5">			  
+		INSERT INTO NPA_MERGE_NGF.WD_RESOURCE (RID, SID, RES_PATH, RES_PEAK, RES_AVG, RES_STATE, RES_TYPE)		
+			VALUES(#{rid}, #{sid}, #{resPath}, #{resPeak}, #{resAvg}, #{resState}, #{resType});   		            		    
+	</insert>	
+	
+	<delete id="deleteDiskList" parameterType="ResourceStatusVo" timeout="5">			  
+		   DELETE FROM WD_RESOURCE WHERE RES_TYPE = '${resType}'        		            		    
+	</delete>	
+</mapper> 

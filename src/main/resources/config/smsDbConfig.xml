@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+    
+<configuration>
+	<properties resource="config.properties" />
+    <typeAliases>
+        <typeAlias alias="SmsDbVo" type="com.watchDog.project.model.SmsDbVo"/>        
+    </typeAliases>
+    <environments default="development">
+        <environment id="development">
+          <transactionManager type="JDBC"/>
+            <!--  connecting to Local MySql -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${db.sms.driver}"/>
+                <property name="url" value="${db.sms.url}"/>
+                <property name="username" value="${db.sms.username}"/>
+                <property name="password" value="${db.sms.password}"/>
+            </dataSource>
+       </environment>
+    </environments>
+    <mappers>
+       <mapper resource="sqlMap/smsDb.xml"/>
+    </mappers>
+</configuration>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="smsDb">
+
+	<insert id="smsDbInsert" parameterType="SmsDbVo">
+		INSERT INTO UDS_MSG (
+							MSG_TYPE
+							 , CMID
+							 , REQUEST_TIME
+							 , SEND_TIME
+							 , DEST_PHONE
+							 , SEND_PHONE
+							 , MSG_BODY)
+					VALUES (
+							0
+							, TO_CHAR(SYSDATE, 'yyyymmddHH24MISS') || '01041058051'
+							, SYSDATE
+							, SYSDATE				
+							, '01041058051'
+							, '01041058051'
+							, #{smsContent})
+						  
+	</insert>
+	 
+</mapper> 

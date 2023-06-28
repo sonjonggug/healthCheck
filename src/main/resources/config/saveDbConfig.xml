@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+    
+<configuration>
+	<properties resource="config.properties" />
+    <typeAliases>
+        <typeAlias alias="ServerStatusVo" type="com.watchDog.project.model.ServerStatusVo"/>
+        <typeAlias alias="ProcStatusVo" type="com.watchDog.project.model.ProcStatusVo"/>
+        <typeAlias alias="ResourceStatusVo" type="com.watchDog.project.model.ResourceStatusVo"/>        
+    </typeAliases>
+    <environments default="development">
+        <environment id="development">
+          <transactionManager type="JDBC"/>
+            <!--  connecting to Local MySql -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${db.save.log.driver}"/>
+                <property name="url" value="${db.save.log.url}"/>
+                <property name="username" value="${db.save.log.username}"/>
+                <property name="password" value="${db.save.log.password}"/>
+            </dataSource>
+       </environment>
+    </environments>
+    <mappers>
+       <mapper resource="sqlMap/saveDb.xml"/>
+    </mappers>
+</configuration>
