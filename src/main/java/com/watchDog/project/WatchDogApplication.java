@@ -86,7 +86,7 @@ public class WatchDogApplication {
 				tcpHealthCheckThread.start();
 			}
 			
-			// 프로세스 리스트 저장
+			
     	    Properties properties = new Properties();
             InputStream input = null;
             
@@ -94,17 +94,18 @@ public class WatchDogApplication {
             input = WatchDogApplication.class.getClassLoader().getResourceAsStream("config.properties");
             properties.load(input);
             
-            // 프로세스 정보 properties에서 받아와 DB 저장
+            // 프로세스 리스트 저장 
             List<ProcStatusVo> procUpdateList = new ArrayList<ProcStatusVo>();
             
+            // 프로세스 정보 properties에서 받아와 리스트 저장
             for(int i = 1 ; i <= procCount; i++) {
             	ProcStatusVo proc = new ProcStatusVo();
             	List<String> list = Arrays.asList(Init.encoding(properties.getProperty("process"+i)).split("\\|")); //  | 기준으로 잘라서 리스트에 넣기
             	proc.setPid(pid+i);            	            
             	proc.setSid(sid);
-            	proc.setProcName(list.get(0));
-            	proc.setProcRoute(list.get(1));
-            	proc.setProcRun(list.get(2));
+            	proc.setProcName(list.get(0)); // 이름
+            	proc.setProcRoute(list.get(1)); // 경로
+            	proc.setProcRun(list.get(2)); // 실행
             	proc.setProcStatus("N");
             	procUpdateList.add(proc);
             	            	            	            	
@@ -114,9 +115,10 @@ public class WatchDogApplication {
             saveDbDao.firstDeleteProcList(sid);  
             saveDbDao.firstInsertProcList(procUpdateList);
                         
-            // 디스크 정보 properties에서 받아와 DB 저장
+            // 디스크 리스트 저장
             List<ResourceStatusVo> diskUpdateList = new ArrayList<ResourceStatusVo>();
             
+            // 디스크 정보 properties에서 받아와 DB 저장
             for(int i = 1 ; i <= diskCount; i++) {
             	ResourceStatusVo disk = new ResourceStatusVo();            	 
             	disk.setRid(rid+"RAM"+i);
@@ -142,7 +144,8 @@ public class WatchDogApplication {
 			String farmName = Init.encoding(farm);			
 			String description = Init.encoding(desc);			
 			String serverName = Init.encoding(name);
-						            						
+			
+			// 와치독 상태 저장
 			ServerStatusVo serverStatusVo = new ServerStatusVo(sid,farmName,serverName,description,"Y",ip,DateTime.nowDate(),DateTime.nowDate());						
 								
 			// 와치독 현재상태 업데이트
@@ -151,9 +154,10 @@ public class WatchDogApplication {
 			// 감시 할 프로세스 목록
 			List<ProcStatusVo> procList = saveDbDao.selectProcList(sid);
 			
-			// 프로세스 상태 체크
+			// 프로세스 상태 체크 및 변경
 			List<ProcStatusVo> procStatus = checkServerProcess.serverConnect(procList);						
 			
+			// 변경 될 프로세스 정보
 			ProcStatusVo changeList = new ProcStatusVo();
 			
 			// 프로세스 상태가 다운이면 재기동

@@ -98,5 +98,21 @@
 	
 	<delete id="deleteDiskList" parameterType="ResourceStatusVo" timeout="5">			  
 		   DELETE FROM WD_RESOURCE WHERE RES_TYPE = '${resType}'        		            		    
-	</delete>	
+	</delete>
+	
+	
+	<update id="updateResourceDay" parameterType="ResourceStatusVo" >	
+		MERGE 
+		  INTO NPA_MERGE_NGF.WD_RESOURCE_DAY WS
+		USING dual
+		   ON (WS.RID = '${rids}' )
+		 WHEN MATCHED THEN
+		      UPDATE
+		         SET  WS.RES_AVG = #{resAvg}
+		         	 ,WS.RES_PEAK = #{resPeak}
+		         	 ,WS.RES_DATE = #{resDate}	             		             		             
+		 WHEN NOT MATCHED THEN
+		      INSERT (WS.RID , WS.SID , WS.RES_DATE , WS.RES_AVG , WS.RES_PEAK , WS.RES_TYPE )
+		      VALUES (#{rid}, #{sid}, #{resDate} , #{resAvg} , #{resPeak} , #{resType} )
+	</update>		
 </mapper> 

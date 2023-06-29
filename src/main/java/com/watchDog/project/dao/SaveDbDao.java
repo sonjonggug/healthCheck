@@ -327,4 +327,29 @@ public class SaveDbDao {
 
 		return result;
 	}
+	
+	/**
+	 * 프로세스 자원 사용량 업데이트
+	 * @param reStatusVo
+	 * @return
+	 * @throws Exception
+	 */
+	public int updateResourceDay (ResourceStatusVo reStatusVo) throws Exception{
+				
+		log.info("자원 사용량 DAY "+reStatusVo.getResType()+" 업데이트 -----> " + "Start");
+				
+		int result = 0;
+		
+		SqlSession session = sqlSessionFactory.openSession();
+
+		try {
+			result = session.insert("saveDb.updateResourceDay",reStatusVo);
+		}finally {
+			session.commit();
+			log.info("자원 사용량 DAY "+reStatusVo.getResType()+" 업데이트 -----> " + result);
+			session.close();
+		}
+
+		return result;
+	}	
 }

@@ -95,8 +95,7 @@ public class CheckResource {
 	    	
 	    // 셸 입력
 	    
-	    outputStream.write(("free -h | awk 'NR==2 {print $3}'" + "\n").getBytes()); // 사용중인 램 용량(GB) 체크 ( available은 시스템에서 현재 사용 가능한 메모리의 양 )	    
-//	    outputStream.write(("df -h | awk 'NR>1 && int(substr($5, 1, length($5)-1)) > 80 {gsub(/%/, \"%_\"); print}'" + "\n").getBytes()); // 디스크 사용량 80퍼 초과 시 , 값 추출을 위해 사용량 %_ 으로 출력후 변환
+	    outputStream.write(("free -h | awk 'NR==2 {print $3}'" + "\n").getBytes()); // 사용중인 램 용량(GB) 체크 ( available은 시스템에서 현재 사용 가능한 메모리의 양 )	    	    
      	     	
 	    // 셸 종료
 	    outputStream.write("exit\n".getBytes());
@@ -119,7 +118,7 @@ public class CheckResource {
 	    // 1분마다 메모리 사용량 누적 저장 
 	    Init.ramUsed += Double.parseDouble(ramUsed);	        
 		
-	    // 현재 ram 사용량이 ramMaxUsed보다 클 시 값 저장 
+	    // 현재 체크한 ram 사용량이 ramMaxUsed보다 클 시 값 저장 
 	    if(Double.parseDouble(ramUsed) > Init.ramMaxUsed) {
 	    	Init.ramMaxUsed = Double.parseDouble(ramUsed);
 	    }
@@ -139,7 +138,7 @@ public class CheckResource {
 	    		reStatusVo.setResState("Y");
 	    	}
 	    	saveDbDao.updateResource(reStatusVo);
-	    	
+	    	saveDbDao.updateResourceDay(reStatusVo);	    	
 	    }
 	    
 	    	    
@@ -303,10 +302,9 @@ public class CheckResource {
 	    
 	    // 디스크 목록 셸 입력 , 디스크 사용량 80퍼 초과 시 에러
 	    for(int i = 0; i < diskList.size(); i++) {	    	
-	    	outputStream.write(("df --output=pcent " + diskList.get(i).getResPath() + " | tail -n 1 ;" + "\n").getBytes()); 
+	    	outputStream.write(("df --output=pcent " + diskList.get(i).getResPath() + " | tail -n 1 ;" + "\n").getBytes()); // 경로에 대한 디스크 사용량 체크
 	    }
-	    
-	    	    
+	    	    	    
 	    // 셸 종료
 	    outputStream.write("exit\n".getBytes());
 	    
@@ -339,14 +337,7 @@ public class CheckResource {
 	    		num++;
 	    	}	    		    	       
 	    }
-	    	        
-		    	    	    	    	    	    
-	    for(int i =0; i < diskUsed.size(); i++) {	    	
-//	    	System.out.println("diskRid : "+diskUsed.get(i).getRid());
-//	    	System.out.println("diskPath : "+diskUsed.get(i).getResPath());
-//	    	System.out.println("diskAvg : "+diskUsed.get(i).getResAvg());
-//	    	System.out.println("diskPeak : "+diskUsed.get(i).getResPeak());
-	    }
+	    	        		    	    	    	    	    	    
 	    
 	    if(Init.usedCount == 10) {
 	    	saveDbDao.updateDiskList(diskUsed);

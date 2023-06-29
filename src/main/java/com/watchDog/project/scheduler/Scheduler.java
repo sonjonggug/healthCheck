@@ -77,7 +77,7 @@ public class Scheduler {
 				// 프로세스 체크 전 상태
 				List<ProcStatusVo> beforeProcList = saveDbDao.selectProcList(sid);								
 				
-				// 같은 List<ProcStatusVo>를 사용해서 nowResult 같이 바뀌면 beforeProcList 값도 바뀌기 때문에 상태코드 따로 List 저장 
+				// 같은 List<ProcStatusVo>를 사용해서 nowResult 값이 바뀌면 beforeProcList 값도 바뀌기 때문에 상태코드 따로 List<String>으로 저장 			
 				List<String> beforeProcStatus = new ArrayList<String>();				
 				for(int i = 0; i < beforeProcList.size(); i++) {					
 					beforeProcStatus.add(beforeProcList.get(i).getProcStatus());															
@@ -88,7 +88,7 @@ public class Scheduler {
 																							
 				ProcStatusVo changeList = new ProcStatusVo();
 												
-				for(int i = 0; i < nowResult.size(); i++) { // result 키 값만큼 반복
+				for(int i = 0; i < nowResult.size(); i++) { 
 										
 					if(beforeProcStatus.get(i).equals("Y") && nowResult.get(i).getProcStatus().equals("Y")) { // 이전 상태값이 Y 이고 현재 상태값이 Y 면 로그만  			
 						 log.info(nowResult.get(i).getProcName() + Constans.SUCCESS);
@@ -103,7 +103,7 @@ public class Scheduler {
 						
 						changeList = checkServerProcess.restart(nowResult.get(i));			
 						
-							if(changeList.getProcStatus().equals("Y")) {
+							if(changeList.getProcStatus().equals("Y")) { // 재기동 성공 시
 								sendService.SendRestartSuccess(changeList);
 								log.info(changeList.getProcName()+ Constans.RESTART_SUCESS);
 							}else {
