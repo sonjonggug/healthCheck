@@ -22,7 +22,12 @@
 		      INSERT (WS.SID, WS.NAME, WS.FARM_NAME , WS.STATUS , WS.IP , WS.CON_DATE , WS.BOOTING_DATE , WS.DESCRIPTION)
 		      VALUES (#{sid}, #{name}, #{farm} , #{status} , #{ip} , #{connDate} , #{bootingDate} , #{desc} )
 	</update>
-	
+
+	<update id="updateServerDate" parameterType="ServerStatusVo" timeout="5">	
+		UPDATE NPA_MERGE_NGF.WD_SERVER
+			SET CON_DATE=#{connDate}
+		WHERE SID=#{sid} 
+	</update>
 	
 	<select id="selectProcList" parameterType="String" resultType="ProcStatusVo">	
 		SELECT  PROC_NAME AS procName
@@ -68,7 +73,7 @@
 		MERGE 
 		  INTO NPA_MERGE_NGF.WD_RESOURCE WS
 		USING dual
-		   ON (WS.RID = '${rids}' )
+		   ON (WS.RID = '${rid}' )
 		 WHEN MATCHED THEN
 		      UPDATE
 		         SET  WS.RES_AVG = #{resAvg}
@@ -98,21 +103,20 @@
 	
 	<delete id="deleteDiskList" parameterType="ResourceStatusVo" timeout="5">			  
 		   DELETE FROM WD_RESOURCE WHERE RES_TYPE = '${resType}'        		            		    
-	</delete>
-	
+	</delete>	
 	
 	<update id="updateResourceDay" parameterType="ResourceStatusVo" >	
 		MERGE 
 		  INTO NPA_MERGE_NGF.WD_RESOURCE_DAY WS
 		USING dual
-		   ON (WS.RID = '${rids}' )
+		   ON (WS.RID = '${rid}' AND WS.RES_DATE = '${resDate}')
 		 WHEN MATCHED THEN
 		      UPDATE
 		         SET  WS.RES_AVG = #{resAvg}
-		         	 ,WS.RES_PEAK = #{resPeak}
-		         	 ,WS.RES_DATE = #{resDate}	             		             		             
+		         	 ,WS.RES_PEAK = #{resPeak}		         	 	             		             		            
 		 WHEN NOT MATCHED THEN
 		      INSERT (WS.RID , WS.SID , WS.RES_DATE , WS.RES_AVG , WS.RES_PEAK , WS.RES_TYPE )
 		      VALUES (#{rid}, #{sid}, #{resDate} , #{resAvg} , #{resPeak} , #{resType} )
-	</update>		
+	</update>
+	
 </mapper> 

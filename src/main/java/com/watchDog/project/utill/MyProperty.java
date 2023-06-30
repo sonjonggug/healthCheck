@@ -1,46 +1,40 @@
 package com.watchDog.project.utill;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
 
 @Getter
-@PropertySource("classpath:config.properties")
-@Component
+//@PropertySource("classpath:config.properties")
 public class MyProperty {
         
-    @Value("${sid}")
-    private String sid;
-    
-    @Value("${name}")
-    private String name;
-    
-    @Value("${farm}")
-    private String farm;
-    
-    @Value("${interval}")
-    private String interval;
-    
-    @Value("${rerun}")
-    private String rerun;
-    
-    @Value("${dbRetyr}")
-    private String dbRetyr;
-    
-    @Value("${proc.count}")
-    private String procCount;
-    
-    @Value("${cpu.fail}")
-    private String cpuFail;
-    
-    @Value("${mem.fail}")
-    private String memFail;
-    
-    @Value("${fail.time}")
-    private String failTime;
+	@Value("${sid}") // WatchDog 서버 고유 ID
+	private String sid ;
+	
+	@Value("${rid.name}") // 서버 자원 사용량 고유 ID
+	private String rid ;	
+	
+	@Value("${farm}") // 서버가 속한 팜
+	private String farm ;
+	
+	@Value("${name}") // 서버 이름
+	private String name ;
+	
+	@Value("${desc}") // 설명
+	private String desc ;	
+
+	@Value("${health.check.use.yn}")
+	private String tcpChkYn; 			//L4 TCP 체크
+		
+	@Value("${process.id}")
+	private String pid;
+	
+	@Value("${proc.count}")
+	private int procCount;
+	
+	@Value("${disk.count}")
+	private int diskCount;	
     
 
 

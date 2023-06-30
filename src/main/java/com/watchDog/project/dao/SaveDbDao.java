@@ -9,6 +9,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import com.watchDog.project.model.ProcStatusVo;
 import com.watchDog.project.model.ResourceStatusVo;
 import com.watchDog.project.model.ServerStatusVo;
+import com.watchDog.project.utill.DateTime;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +41,30 @@ public class SaveDbDao {
 
 		return result;
 	}
+
+	public int updateServerDate (String sid) throws Exception{
+		
+		log.info("와치독 동작 시간 업데이트 -----> " + "Start");
+		
+		ServerStatusVo serStatusVo = new ServerStatusVo();
+		
+		serStatusVo.setSid(sid);
+		serStatusVo.setConnDate(DateTime.nowDate());
+		
+		int result = 0;
+		
+		SqlSession session = sqlSessionFactory.openSession();
+
+		try {
+			result = session.insert("saveDb.updateServerDate",serStatusVo);
+		}finally {
+			session.commit();			
+			session.close();
+			log.info("와치독 동작 시간 업데이트 -----> " + result);
+		}
+
+		return result;
+	}	
 	
 	/**
 	 * 프로세스 목록 확인
@@ -329,15 +354,17 @@ public class SaveDbDao {
 	}
 	
 	/**
-	 * 프로세스 자원 사용량 업데이트
+	 * 프로세스 자원 사용량 업데이트 (일별)
 	 * @param reStatusVo
 	 * @return
 	 * @throws Exception
 	 */
 	public int updateResourceDay (ResourceStatusVo reStatusVo) throws Exception{
 				
-		log.info("자원 사용량 DAY "+reStatusVo.getResType()+" 업데이트 -----> " + "Start");
-				
+		log.info("자원 사용량 Day "+reStatusVo.getResType()+" 업데이트 -----> " + "Start");
+		
+		reStatusVo.setResDate(DateTime.nowDateHour());
+		
 		int result = 0;
 		
 		SqlSession session = sqlSessionFactory.openSession();
@@ -346,10 +373,40 @@ public class SaveDbDao {
 			result = session.insert("saveDb.updateResourceDay",reStatusVo);
 		}finally {
 			session.commit();
-			log.info("자원 사용량 DAY "+reStatusVo.getResType()+" 업데이트 -----> " + result);
+			log.info("자원 사용량 Day "+reStatusVo.getResType()+" 업데이트 -----> " + result);
 			session.close();
 		}
 
 		return result;
-	}	
+	}
+	
+	/**
+	 * 프로세스 디스크 사용량 업데이트 (일별)
+	 * @param reStatusVo
+	 * @return
+	 * @throws Exception
+	 */
+	public int updateDiskListDay (List<ResourceStatusVo> reStatusVo) throws Exception{
+				
+		log.info("디스크 사용량 Day 업데이트 -----> " + "Start");
+					
+		
+		int result = 0;
+		
+		SqlSession session = sqlSessionFactory.openSession();
+
+		try {
+			
+			for(ResourceStatusVo rsStatusVo : reStatusVo) {
+		     	result += session.update("saveDb.updateResourceDay", rsStatusVo);				    
+			 }
+			
+		}finally {
+			session.commit();
+			log.info("디스크 사용량 Day 업데이트 -----> " + result);
+			session.close();
+		}
+
+		return result;
+	}
 }

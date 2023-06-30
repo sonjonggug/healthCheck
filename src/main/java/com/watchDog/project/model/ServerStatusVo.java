@@ -27,6 +27,10 @@ public ServerStatusVo(String sid, String farm, String name, String desc,  String
 	this.connDate = connDate;
 	this.bootingDate = bootingDate;
 }
+
+public ServerStatusVo() {
+	
+}
 	
 
 	

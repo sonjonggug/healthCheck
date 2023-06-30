@@ -16,6 +16,7 @@ import com.watchDog.project.dao.SmsDbDao;
 import com.watchDog.project.model.SmsDbVo;
 import com.watchDog.project.utill.Constans;
 import com.watchDog.project.utill.DbConnectionFactory;
+import com.watchDog.project.utill.Stat;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -47,7 +48,7 @@ public class CheckDataBase {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean dataBaseHealthCheck(boolean dbHealth, int chkDbCnt) throws Exception{
+	public boolean dataBaseHealthCheck() throws Exception{
 		
 		// DB 연결
 		ChkDbDao chkDbDao = new ChkDbDao(DbConnectionFactory.getChkDbSqlSessionFactory());
@@ -63,7 +64,7 @@ public class CheckDataBase {
 			// DB에  INSERT/UPDATE ( MERGE INTO )
 			chkDbDao.dbMergeInto();
 	
-	        //smsDbDao.dbInsert(dbHealth);
+	        //smsDbDao.dbInsert(Stat.dbHealth);
 			// 쿼리 실행 시간 측정 종료
 	        long endTime = System.currentTimeMillis();
 	        
@@ -72,47 +73,47 @@ public class CheckDataBase {
 	        
 	        if (elapsedTime >= Constans.elapsedTime) {
 	        	
-	        	if(chkDbCnt >= dbRetryCnt && dbHealth) { 
+	        	if(Stat.chkDbCnt >= dbRetryCnt && Stat.dbHealth) { 
 		            System.out.println("쿼리 실행시간 10초 이상입니다. (" + elapsedTime + " milliseconds)");
-		            dbHealth = false;
-		            chkDbCnt = 0;
+		            Stat.dbHealth = false;
+		            Stat.chkDbCnt = 0;
 		            // 현재 시간을 포맷 적용하여 문자열로 변환
 		            String formattedDateTime = LocalDateTime.now().format(formatter);
 					smsDbVo.setSmsContent("[클라우드 운영 알림] \n 장비가 동작을 정지했습니다. \n - 팜 : 팜 이름 \n - 장비 : 장비이름 \n"+formattedDateTime); 
 		            smsDbDao.dbInsert(smsDbVo);
-	        	}else if(chkDbCnt < dbRetryCnt && dbHealth) {
-		            System.out.println("쿼리 실행시간 10초 이상입니다. chkDbCnt: "+ chkDbCnt +" (" + elapsedTime + " milliseconds)");
-	        		chkDbCnt++;
+	        	}else if(Stat.chkDbCnt < dbRetryCnt && Stat.dbHealth) {
+		            System.out.println("쿼리 실행시간 10초 이상입니다. Stat.chkDbCnt: "+ Stat.chkDbCnt +" (" + elapsedTime + " milliseconds)");
+	        		Stat.chkDbCnt++;
 	        	}
 	        }else {
-	        	if(dbHealth == false) {
+	        	if(Stat.dbHealth == false) {
 		            System.out.println("db 가 복구되었습니다. ");
-		            dbHealth = true;
-		            chkDbCnt = 0;
+		            Stat.dbHealth = true;
+		            Stat.chkDbCnt = 0;
 		            String formattedDateTime = LocalDateTime.now().format(formatter);
 					smsDbVo.setSmsContent("[클라우드 운영 알림] \n 데이터 베이스가 복구 되었습니다. \n - 팜 : 팜 이름 \n - 장비 : 장비이름 \n"+formattedDateTime); 
 		            smsDbDao.dbInsert(smsDbVo);
 	        	}else {
-		            chkDbCnt = 0;
+		            Stat.chkDbCnt = 0;
 	        	}
 	        }
 			
 		} catch (Exception e) {
 			
-			if(chkDbCnt >= dbRetryCnt && dbHealth) { 
+			if(Stat.chkDbCnt >= dbRetryCnt && Stat.dbHealth) { 
 	            System.out.println("sqlException. 3번 이상 동작");
-	            dbHealth = false;
-	            chkDbCnt = 0;
+	            Stat.dbHealth = false;
+	            Stat.chkDbCnt = 0;
 	            // 현재 시간을 포맷 적용하여 문자열로 변환
 	            String formattedDateTime = LocalDateTime.now().format(formatter);
 				smsDbVo.setSmsContent("[클라우드 운영 알림] \n 장비가 동작을 정지했습니다. \n - 팜 : 팜 이름 \n - 장비 : 장비이름 \n"+formattedDateTime); 
 	            smsDbDao.dbInsert(smsDbVo);
-	    	}else if(chkDbCnt < dbRetryCnt && dbHealth) {
-	            System.out.println("sqlException. chkDbCnt: "+ chkDbCnt);
-	    		chkDbCnt++;
+	    	}else if(Stat.chkDbCnt < dbRetryCnt && Stat.dbHealth) {
+	            System.out.println("sqlException. Stat.chkDbCnt: "+ Stat.chkDbCnt);
+	    		Stat.chkDbCnt++;
 	    	}
 	    }
-		return dbHealth;
+		return Stat.dbHealth;
 	}
 }
 

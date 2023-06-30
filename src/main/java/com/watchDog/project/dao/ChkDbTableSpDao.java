@@ -30,9 +30,9 @@ public class ChkDbTableSpDao {
 			e.printStackTrace();
 		}finally {
 			session.commit();
-			for (Object data : result) {
-	            System.out.println("selectList: "+data.toString());
-	        }
+//			for (Object data : result) {
+//	            System.out.println("selectList: "+data.toString());
+//	        }
 			session.close();
 		}
 		

@@ -19,6 +19,7 @@ import com.watchDog.project.service.SendService;
 import com.watchDog.project.utill.Constans;
 import com.watchDog.project.utill.DbConnectionFactory;
 import com.watchDog.project.utill.Init;
+import com.watchDog.project.utill.Stat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +59,9 @@ public class Scheduler {
 				 
 			
 	//DB check
-	boolean dbHealth = true; //db 이전 상태 값 ( true : ok / false : down or exception 상황 )
+	//boolean dbHealth = true; //db 이전 상태 값 ( true : ok / false : down or exception 상황 )
 	
-	int chkDbCnt = 0;
+	//int chkDbCnt = 0;
 	
 	/**
 	 * 자바 프로세스 체크
@@ -68,7 +69,7 @@ public class Scheduler {
 	@Scheduled(fixedRate = 10000) // 테스트용 30초 , 600000 -> 10분
 //	@Scheduled(cron="0/10 * * * * *") // 10초
     public void checkServerProcess() {
-		if(javaUseYn.equals(Constans.USE_YN_Y) && Init.START.equals(Constans.USE_YN_Y)) {
+		if(javaUseYn.equals(Constans.USE_YN_Y) && Stat.START.equals(Constans.USE_YN_Y)) {
 	
 			try {			
 				
@@ -77,7 +78,7 @@ public class Scheduler {
 				// 프로세스 체크 전 상태
 				List<ProcStatusVo> beforeProcList = saveDbDao.selectProcList(sid);								
 				
-				// 같은 List<ProcStatusVo>를 사용해서 nowResult 값이 바뀌면 beforeProcList 값도 바뀌기 때문에 상태코드 따로 List<String>으로 저장 			
+				// 같은 List<ProcStatusVo>를 사용해서 nowResult 같이 바뀌면 beforeProcList 값도 바뀌기 때문에 상태코드 따로 List 저장 
 				List<String> beforeProcStatus = new ArrayList<String>();				
 				for(int i = 0; i < beforeProcList.size(); i++) {					
 					beforeProcStatus.add(beforeProcList.get(i).getProcStatus());															
@@ -88,7 +89,7 @@ public class Scheduler {
 																							
 				ProcStatusVo changeList = new ProcStatusVo();
 												
-				for(int i = 0; i < nowResult.size(); i++) { 
+				for(int i = 0; i < nowResult.size(); i++) { // result 키 값만큼 반복
 										
 					if(beforeProcStatus.get(i).equals("Y") && nowResult.get(i).getProcStatus().equals("Y")) { // 이전 상태값이 Y 이고 현재 상태값이 Y 면 로그만  			
 						 log.info(nowResult.get(i).getProcName() + Constans.SUCCESS);
@@ -103,19 +104,19 @@ public class Scheduler {
 						
 						changeList = checkServerProcess.restart(nowResult.get(i));			
 						
-							if(changeList.getProcStatus().equals("Y")) { // 재기동 성공 시
+							if(changeList.getProcStatus().equals("Y")) {
 								sendService.SendRestartSuccess(changeList);
 								log.info(changeList.getProcName()+ Constans.RESTART_SUCESS);
 							}else {
-								for(; Init.errCount < retryCnt;) { // 재기동 해야하는 횟수가 에러 카운트보다 클때
+								for(; Stat.errCount < retryCnt;) { // 재기동 해야하는 횟수가 에러 카운트보다 클때
 //									changeList = checkServerProcess.restart(nowResult.get(i));
-									if(Init.errCount == 0) { // 에러카운트가 0 (재기동 성공) 일때 
+									if(Stat.errCount == 0) { // 에러카운트가 0 (재기동 성공) 일때 
 										log.info(changeList.getProcName()+ Constans.RESTART_SUCESS);
 										break;
 									}
 								}	
 								
-								if(Init.errCount >= retryCnt) { // 에러카운트와 재기동 횟수가 크거나 같을때 즉, 재기동 횟수만큼 돌렸으나 계속 다운일때
+								if(Stat.errCount >= retryCnt) { // 에러카운트와 재기동 횟수가 크거나 같을때 즉, 재기동 횟수만큼 돌렸으나 계속 다운일때
 									log.info(changeList.getProcName() + Constans.RESTART_FAIL);
 									sendService.SendRestartFail(changeList);
 								}																									
@@ -125,6 +126,7 @@ public class Scheduler {
 						nowResult.set(i, changeList); // 변경된 리스트 값을 set						
 				} // for 문 끝																	
 						saveDbDao.updateProcList(nowResult);
+						saveDbDao.updateServerDate(sid);
 					} catch (Exception e) {
 					  e.printStackTrace();
 					  log.info("Exception Error -----------------> ");
@@ -139,20 +141,23 @@ public class Scheduler {
 	 */
 	@Scheduled(fixedRate = 10000) // 테스트용 30초 , 600000 -> 10분 // @Scheduled(cron="0/10 * * * * *") 1분마다 
     public void checkServerUsed() {
-      if(sysUseYn.equals(Constans.USE_YN_Y) && Init.START.equals(Constans.USE_YN_Y)) {
+      if(sysUseYn.equals(Constans.USE_YN_Y) && Stat.START.equals(Constans.USE_YN_Y)) {
 		try {	
+				
+				SaveDbDao saveDbDao = new SaveDbDao(DbConnectionFactory.getDbSaveSqlSessionFactory());
 			
-	   			checkserServerUsed.checkRamUsed();
-				checkserServerUsed.checkCpuUsed();
-				checkserServerUsed.checkDiskUsed();
+	   			boolean checkRam = checkserServerUsed.checkRamUsed();
+	   			boolean checkCPU = checkserServerUsed.checkCpuUsed();
+	   			boolean checkDisk = checkserServerUsed.checkDiskUsed();
 			 
-				Init.addUsedCount();
+				Stat.addUsedCount(); // 스케쥴러 동작 시 +1 카운트
 			 
 				// 10분마다 누적 카운트 초기화
-				if(Init.usedCount == 10) {    			    	
-					 Init.initResource();
-				    }    			 
+				if(Stat.usedCount == 10) {    			    	
+					Stat.initResource();
+				    }    			 											
 				
+				saveDbDao.updateServerDate(sid);
 				
 				} catch (Exception e) {
 				  e.printStackTrace();
@@ -171,7 +176,7 @@ public class Scheduler {
 		if(dbUseYn.equals(Constans.USE_YN_Y)) {
 			try {	
 				//서비스 호출
-				boolean result = checkDataBase.dataBaseHealthCheck(dbHealth, chkDbCnt); //여러개 DB체크해야한다면 로직 변경 필요
+				boolean result = checkDataBase.dataBaseHealthCheck(); //여러개 DB체크해야한다면 로직 변경 필요
 				if(result) {
 					log.info("성공");
 				}else {
@@ -190,25 +195,22 @@ public class Scheduler {
 	 */
 //	@Scheduled(fixedRate = 20000) // 테스트용 30초 , 600000 -> 10분 // @Scheduled(cron="0/10 * * * * *") 1분마다 
     public void checkDbTableSp() {
-      if(true) {
-		try {									
-			
-			boolean result = true;
-			checkDbTableSpace.chkDbTableSpSelect();
-			
-			if(result) {
-				log.info("성공");
-			}else {
-				log.info("실패");
-			}
-				} catch (Exception e) {
-				  e.printStackTrace();
-				  log.info("Exception Error -----------------> ");
+		if(true) {
+			try {									
+				checkDbTableSpace.chkDbTableSpSelect();
+				Stat.addUsedCount();
+				// 10분마다 누적 카운트 초기화
+				if(Stat.usedCount > 10) {    			    	
+					Stat.initResource();
 				}
-      	}else {
-      		log.info("DB 테이블 스페이스 체크 사용안함");
-      	}
-    }		
+			} catch (Exception e) {
+			  e.printStackTrace();
+			  log.info("Exception Error -----------------> ");
+			}
+	  	}else {
+	  		log.info("DB 테이블 스페이스 체크 사용안함");
+	  	}
+    }
 	
 	
 	/**
@@ -225,10 +227,10 @@ public class Scheduler {
     			checkserServerUsed.checkCpuUsed();
     			checkserServerUsed.checkDiskUsed();
     			 
-    			 Init.addUsedCount();
+    			Stat.addUsedCount();
     			 
-    			 if(Init.usedCount == 10) {    			    	
-    				 Init.initResource();
+    			 if(Stat.usedCount == 10) {    			    	
+    				 Stat.initResource();
     			    }    			 
     			     			
 				} catch (Exception e) {

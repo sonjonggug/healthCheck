@@ -13,6 +13,7 @@ public class ResourceStatusVo {
 	private double resAvg;
 	private String resState;
 	private String resType;
+	private String resDate;
 
 	
 	

@@ -15,7 +15,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.watchDog.project.model.ProcStatusVo;
 import com.watchDog.project.utill.DateTime;
-import com.watchDog.project.utill.Init;
+import com.watchDog.project.utill.Stat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +91,7 @@ public List<ProcStatusVo> serverConnect(List<ProcStatusVo> procList) {
             			procList.get(i).setUpTime(DateTime.nowDate()); // 프로세스 상태 유무
             			procList.get(i).setDownTime(""); // 프로세스 상태 유무
             			log.info("프로세스 정상---> " + procList.get(i).getProcName());            			
-            			Init.initCount(); // 에러 카운트 0으로 초기화
+            			Stat.initCount(); // 에러 카운트 0으로 초기화
             		} else {
             			procList.get(i).setProcStatus("N");
             			log.info("프로세스 다운---> " + procList.get(i).getProcName());            			
@@ -292,13 +292,13 @@ public ProcStatusVo restartCheck(ProcStatusVo proc) throws Exception{
             		proc.setProcStatus("Y"); // 프로세스 상태 유무
             		proc.setUpTime(DateTime.nowDate());
             		proc.setDownTime("");
-            		Init.initCount(); // 에러카운트 0으로 초기화
+            		Stat.initCount(); // 에러카운트 0으로 초기화
             	} else {
             		log.info(proc.getProcName() +" 프로세스 재기동 실패");            		        			
             		proc.setProcStatus("N"); // 프로세스 상태 유무
             		proc.setUpTime("");
             		proc.setDownTime(DateTime.nowDate());
-        			Init.addCount(); // 에러카운트 +1 
+        			Stat.addCount(); // 에러카운트 +1 
             		}            	            	            	            	
                              	
             	
