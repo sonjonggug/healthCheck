@@ -65,7 +65,7 @@ public class Init {
 		String description = Encoding.encodingToUTF(desc);			
 		String serverName = Encoding.encodingToUTF(name);
 					            						
-		ServerStatusVo serverStatusVo = new ServerStatusVo(sid,farmName,serverName,description,"Y",ip,DateTime.nowDate(),DateTime.nowDate());						
+		ServerStatusVo serverStatusVo = new ServerStatusVo(sid,farmName,serverName,description,"Y",ip);						
 							
 		// 와치독 현재상태 업데이트
 		saveDbDao.serverUpdate(serverStatusVo);
@@ -133,7 +133,7 @@ public class Init {
         
         for(int i = 1 ; i <= diskCount; i++) {
         	ResourceStatusVo disk = new ResourceStatusVo();            	 
-        	disk.setRid(rid+"RAM"+i);
+        	disk.setRid(rid+"DISK"+i);
         	disk.setSid(sid);
         	disk.setResPath(Encoding.encodingToUTF(properties.getProperty("disk"+i)));            	            
         	disk.setResState("Y");

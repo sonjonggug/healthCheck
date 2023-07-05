@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -73,18 +75,12 @@ public class CheckDbTableSpace {
 	 * @return
 	 * @throws Exception
 	 */
-	public void chkDbTableSpSelect() throws Exception{
-		
-		// DB 연결
-		SmsDbDao smsDbDao = new SmsDbDao(DbConnectionFactory.getDbSmsSqlSessionFactory());
+	public Map<String, Object> chkDbTableSpSelect() throws Exception{
+
+		Map<String, Object> result = new HashMap<String, Object>();
+		boolean thresholdCheckResult = true;
 		ChkDbTableSpDao chkDbTableSpDao = new ChkDbTableSpDao(DbConnectionFactory.getChkDbSqlSessionFactory());
-		
-		SmsDbVo smsDbVo = new SmsDbVo();
-		// 포맷 지정
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd a h시 mm분");
-        
-        boolean result = true;
-        
+                
 		try {
 			// 프로세스 리스트 저장
     	    Properties properties = new Properties();
@@ -94,34 +90,30 @@ public class CheckDbTableSpace {
             input = WatchDogApplication.class.getClassLoader().getResourceAsStream("config.properties");
             properties.load(input);
 
-			
 			List<ChkDbTableSpVo> dbTableSpList = new ArrayList<ChkDbTableSpVo>();
 			dbTableSpList = chkDbTableSpDao.chkDbTableSpSelect();	
 
-
-
 	        for(int i = 1 ; i <= tspChkCount; i++) {
 		    	List<String> list = Arrays.asList(Encoding.encodingToUTF(properties.getProperty("db.tb.space.check.info"+i)).split(",")); //  , 기준으로 잘라서 리스트에 넣기
-				result = Thresholdcheck(dbTableSpList, list, i);
+		    	thresholdCheckResult = Thresholdcheck(dbTableSpList, list, i);
+		    	if(thresholdCheckResult == false) {
+		    		break;
+		    	}
 		    }
 			
-			
-			
-			if(!result) {
-	            String formattedDateTime = LocalDateTime.now().format(formatter);
-				smsDbVo.setSmsContent("[클라우드 운영 알림] \n 데이터 베이스의 테이블 스페이스가 부족합니다. \n - 팜 : 팜 이름 \n - 장비 : 장비이름 \n - DB : 장비이름 \n"+formattedDateTime); 
-				smsDbDao.dbInsert(smsDbVo);
+			if(!thresholdCheckResult) {
+        		result.put("status", "N");
 			}
 			
 		}	catch (Exception e) {
 			e.printStackTrace();
 		}
+		return result;
 	}
 	
 	private boolean Thresholdcheck(List<ChkDbTableSpVo> dbTableSpList, List<String> chkInfo, int i) {
-		boolean temp = true;
+		boolean result = true;
 		double tableSpUsed = 0;
-	    
 	    
 		if(chkInfo.size() > 0) {
 			for(int j=0; j<dbTableSpList.size(); j++) {
@@ -138,7 +130,7 @@ public class CheckDbTableSpace {
 					if(dbTableSpList.get(j).getUsepercent() > Float.parseFloat(chkInfo.get(1)) ) {
 						//임계치 이상
 						System.out.println("임계치 이상 입니다.");
-						temp = false;
+						result = false;
 					}else {
 						
 					}
@@ -151,7 +143,7 @@ public class CheckDbTableSpace {
 	        }
 		    
 		}
-		return temp;
+		return result;
 	}
 	
 	// 10분 마다  update 
@@ -161,10 +153,9 @@ public class CheckDbTableSpace {
 		// 프로세스 정보 properties에서 받아와 DB 저장
         //List<ResourceStatusVo> reStatusVoList = new ArrayList<ResourceStatusVo>();
     	ResourceStatusVo reStatusVo = new ResourceStatusVo();
-    	System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
     	reStatusVo.setRid(rid+"TS"+i);  
     	reStatusVo.setSid(sid); 
-    	reStatusVo.setResType("TABELSPACE");
+    	reStatusVo.setResType("TABLESPACE");
     	reStatusVo.setResAvg(tableSpUsed); 
     	reStatusVo.setResPeak(tableSpUsed);
     	reStatusVo.setResPath(chkInfo.get(0));
@@ -172,11 +163,8 @@ public class CheckDbTableSpace {
     	//reStatusVoList.add(reStatusVo);      	
         
         try {
-	    	System.out.println("11111111@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 			saveDbDao.updateResource(reStatusVo);
-	    	System.out.println("22222222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		} catch (Exception e) {
-	    	System.out.println("333333333@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	    	System.out.println(e);
 	    	e.printStackTrace();
 		}

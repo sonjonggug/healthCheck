@@ -1,13 +1,14 @@
 package com.watchDog.project.dao;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-import com.watchDog.project.model.SmsDbVo;
+import com.watchDog.project.model.SmsUserDbVo;
 
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 public class SmsDbDao {
 
 	private SqlSessionFactory sqlSessionFactory = null;
@@ -16,20 +17,31 @@ public class SmsDbDao {
 		this.sqlSessionFactory = sqlSessionFactory;
 	}
 	
-	public int dbInsert(SmsDbVo smsDbVo) {
+	/**
+	 * SMS 전송 
+	 * @param smsUserDbVo
+	 * @return
+	 */
+	public int dbInsert(List<SmsUserDbVo> smsUserDbVo) {
         
+		log.info("SMS 전송 시작 ------> " + "Start");
+		
 		int result = 0;
 		
 		SqlSession session = sqlSessionFactory.openSession();
 		
 		try {
-			result = session.insert("smsDb.smsDbInsert",smsDbVo);
 			
+			for(SmsUserDbVo smsVo : smsUserDbVo) {
+				result += session.insert("smsDb.smsDbInsert",smsVo);
+				Thread.sleep(1000); // pk가 TO_CHAR(SYSDATE, 'yyyymmddHH24MISS') 이기 떄문에 1초 텀 두고 인서트
+			 }
+						
 		} catch (Exception e) {
 			e.printStackTrace();
 		}finally {
 			session.commit();
-			System.out.println("smsDbInsert: "+result);
+			log.info("SMS 전송 결과 ------> " + result);
 			session.close();
 		}
 		

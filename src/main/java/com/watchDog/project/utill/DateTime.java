@@ -1,11 +1,12 @@
 package com.watchDog.project.utill;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class DateTime {
 
-	
+	private static LocalDate lastExecutionDate; // 마지막 실행 날짜를 저장하는 변수
 	
 	public static String nowDate() {
 		
@@ -29,4 +30,22 @@ public class DateTime {
         
         return result;
 	}
+	
+	/**
+	 * 하루 한번만
+	 * 현재 날짜가 마지막 실행 날짜와 다른 경우에만 실행
+	 * @return
+	 */
+	public static boolean shouldExecute() {
+    	
+        LocalDate currentDate = LocalDate.now();
+
+        // 현재 날짜가 마지막 실행 날짜와 다른 경우에만 실행
+        if (lastExecutionDate == null || !lastExecutionDate.equals(currentDate)) {
+            lastExecutionDate = currentDate; // 마지막 실행 날짜를 갱신
+            return true;
+        }
+
+        return false;
+    }
 }

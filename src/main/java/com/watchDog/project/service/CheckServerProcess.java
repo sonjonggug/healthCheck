@@ -13,8 +13,12 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import com.watchDog.project.dao.SaveDbDao;
 import com.watchDog.project.model.ProcStatusVo;
+import com.watchDog.project.utill.Constans;
 import com.watchDog.project.utill.DateTime;
+import com.watchDog.project.utill.DbConnectionFactory;
+import com.watchDog.project.utill.EventUtill;
 import com.watchDog.project.utill.Stat;
 
 import lombok.RequiredArgsConstructor;
@@ -41,12 +45,13 @@ public class CheckServerProcess {
 	@Value("${interval}")
 	 int interval;
 	
+	private final EventUtill eventUtill ;
 	
 
 public List<ProcStatusVo> serverConnect(List<ProcStatusVo> procList) {
 		
 		log.info("프로세스 상태 체크 ... " );
-				
+						
 		try {
 										
 		// JSch 라이브러리로 SSH 세션을 생성
@@ -89,13 +94,13 @@ public List<ProcStatusVo> serverConnect(List<ProcStatusVo> procList) {
             		if(outputBuffer.toString().contains(procList.get(i).getProcName() +" ")) { // 정확한 프로세스 이름 검색 Ex: gasmon , gasmon_m
             			procList.get(i).setProcStatus("Y"); // 프로세스 상태 유무
             			procList.get(i).setUpTime(DateTime.nowDate()); // 프로세스 상태 유무
-            			procList.get(i).setDownTime(""); // 프로세스 상태 유무
-            			log.info("프로세스 정상---> " + procList.get(i).getProcName());            			
-            			Stat.initCount(); // 에러 카운트 0으로 초기화
+            			procList.get(i).setDownTime(""); // 프로세스 상태 유무            			
+            			log.info("프로세스 정상---> " + procList.get(i).getProcName());            			            			
             		} else {
             			procList.get(i).setProcStatus("N");
-            			log.info("프로세스 다운---> " + procList.get(i).getProcName());            			
-            			            			          		
+            			log.info("프로세스 다운---> " + procList.get(i).getProcName());
+            			eventUtill.updateEvent(procList.get(i).getPid(),procList.get(i).getProcName() +" "+Constans.MSG_PROC_FAIL,procList.get(i).getProcStatus());
+            			eventUtill.insertEventLog(procList.get(i).getPid(),procList.get(i).getProcName() +" "+Constans.MSG_PROC_FAIL,procList.get(i).getProcStatus());
             		}            		                      	
             	}     
             	  // SSH 연결을 종료하고, 결과값을 반환
@@ -242,7 +247,8 @@ public void start (ProcStatusVo proc) throws Exception{
 public ProcStatusVo restartCheck(ProcStatusVo proc) throws Exception{
 		
 		log.info("프로세스 재기동 체크 ... "+ proc.getProcName());
-								
+		
+		SaveDbDao saveDbDao = new SaveDbDao(DbConnectionFactory.getDbSaveSqlSessionFactory());
 							
 		// JSch 라이브러리로 SSH 세션을 생성
         JSch jsch = new JSch();
@@ -292,13 +298,16 @@ public ProcStatusVo restartCheck(ProcStatusVo proc) throws Exception{
             		proc.setProcStatus("Y"); // 프로세스 상태 유무
             		proc.setUpTime(DateTime.nowDate());
             		proc.setDownTime("");
-            		Stat.initCount(); // 에러카운트 0으로 초기화
+            		eventUtill.updateEvent(proc.getPid(),proc.getProcName() +" "+Constans.MSG_PROC_RESTART,proc.getProcStatus());
+            		eventUtill.insertEventLog(proc.getPid(),proc.getProcName() +" "+Constans.MSG_PROC_RESTART,proc.getProcStatus());
             	} else {
             		log.info(proc.getProcName() +" 프로세스 재기동 실패");            		        			
             		proc.setProcStatus("N"); // 프로세스 상태 유무
             		proc.setUpTime("");
             		proc.setDownTime(DateTime.nowDate());
-        			Stat.addCount(); // 에러카운트 +1 
+            		eventUtill.updateEvent(proc.getPid(),proc.getProcName() +" "+Constans.MSG_PROC_RESTART_FAIL,proc.getProcStatus());
+            		eventUtill.insertEventLog(proc.getPid(),proc.getProcName() +" "+Constans.MSG_PROC_RESTART_FAIL,proc.getProcStatus());
+            		
             		}            	            	            	            	
                              	
             	

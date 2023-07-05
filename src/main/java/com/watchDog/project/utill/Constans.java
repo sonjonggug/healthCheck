@@ -24,12 +24,14 @@ public class Constans {
 	
 	public static final String MSG_SERVER_RESTART = "장비가 재 시작되었습니다.";
 	public static final String MSG_PROC_RESTART = "프로세스가 재 실행되었습니다.";
+	public static final String MSG_PROC_FAIL = "프로세스가 다운된 상태입니다.";
 	public static final String MSG_PROC_RESTART_FAIL = "프로세스를 재 실행하려고 했으나 실패하였습니다.";
 	public static final String MSG_RAM_OVER = "평균 메모리 사용률이 xx%로 기준을 초과하였습니다.";
 	public static final String MSG_CPU_OVER = "평균 CPU 사용률이 xx%로 기준을 초과하였습니다.";
-	public static final String MSG_DISK_OVER = "평균 디스크 사용률이 xx% 로 기준을 초과하였습니다.";
+	public static final String MSG_DISK_OVER = "path 디스크 사용률이 xx% 로 기준을 초과하였습니다.";
 	public static final String MSG_DISK_ACCESS_FAIL = "디스크 접속에 실패하였습니다.";
 	public static final String MSG_DB_ACCESS_FAIL = "데이터 베이스에 이용에 문제가 발생하였습니다.";
+	public static final String MSG_DB_ACCESS_SUCCESS = "데이터 베이스가 복구 되었습니다.";
 	public static final String MSG_DB_TBS_OVER = "데이터 베이스의 테이블 스페이스가 부족합니다.";
 	public static final String MSG_SERVER_STOP = "장비가 동작을 정지했습니다.";
 	

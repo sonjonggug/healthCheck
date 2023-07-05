@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,14 +17,19 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.watchDog.project.dao.SaveDbDao;
 import com.watchDog.project.model.ResourceStatusVo;
+import com.watchDog.project.utill.Constans;
 import com.watchDog.project.utill.DateTime;
 import com.watchDog.project.utill.DbConnectionFactory;
+import com.watchDog.project.utill.EventUtill;
 import com.watchDog.project.utill.Stat;
 
+import ch.qos.logback.classic.spi.EventArgUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CheckResource {
 	
 	
@@ -56,21 +63,23 @@ public class CheckResource {
 	@Value("${disk.fail}")
 	 int diskFail;	
 	
-
+	private final EventUtill eventUtill;
 			
 	/**
 	 * 서버 메모리 사용량 체크
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean checkRamUsed(){
+	public Map<String, String> checkRamUsed(){
 		
-		boolean result = true ;
+		Map<String, String> result = new HashMap<String, String>();
 		
 	try {
 						
 		SaveDbDao saveDbDao = new SaveDbDao(DbConnectionFactory.getDbSaveSqlSessionFactory());
-	
+		
+		
+		
 		log.info("메모리 사용량 체크 -----> " + "Start");
 								
 		// JSch 라이브러리로 SSH 세션을 생성
@@ -129,17 +138,23 @@ public class CheckResource {
 	    // 10분 마다 각 램 평균,최대값 DB update 
 	    if(Stat.usedCount == 1) {
 	    	ResourceStatusVo reStatusVo  = new ResourceStatusVo();
+	    	double ramAvgUsed = Math.round(Stat.ramUsed / 10 * 10) / 10.0 ; // 평균을 구하고 소수점 반올림 | 반올림 : Math.round(value * 10) / 10.0; 
 	    	reStatusVo.setRid(rid+"RAM");
 	    	reStatusVo.setSid(sid);
 	    	reStatusVo.setResType("RAM");
-	    	reStatusVo.setResAvg(Stat.ramUsed / 10); 
+	    	reStatusVo.setResAvg(ramAvgUsed); 
 	    	reStatusVo.setResPeak(Stat.ramMaxUsed);
 	    	reStatusVo.setResPath("");
 	    	if(Stat.ramUsed / 10 > memFail) { // 램 평균 사용량이 임계치 이상이면 장애
 	    		reStatusVo.setResState("N");
-	    		result = false ;
+	    		result.put("status", "N");	    		
+	    		result.put("limit", String.valueOf(ramAvgUsed));
+	    		eventUtill.updateEvent(reStatusVo.getRid(),Constans.MSG_RAM_OVER.replace("xx", String.valueOf(reStatusVo.getResAvg())),"N");
+	    		eventUtill.insertEventLog(reStatusVo.getRid(),Constans.MSG_RAM_OVER.replace("xx", String.valueOf(reStatusVo.getResAvg())),"N");
 	    	}else {
 	    		reStatusVo.setResState("Y");
+	    		result.put("status", "Y");
+	    		result.put("limit", String.valueOf(ramAvgUsed));
 	    	}
 	    	saveDbDao.updateResource(reStatusVo);
 	    	saveDbDao.updateResourceDay(reStatusVo);
@@ -157,8 +172,9 @@ public class CheckResource {
 	    log.info("메모리 사용량 체크 -----> " + ramUsed+"GB 사용중");
 	    
 		} catch (Exception e) {
+			result.put("status", "E");
 			e.printStackTrace();
-			return false;		
+			return result;		
 		}	
 		return result;
     }
@@ -169,9 +185,9 @@ public class CheckResource {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean checkCpuUsed(){
+	public Map<String, String> checkCpuUsed(){
 		
-		boolean result = true ;
+		Map<String, String> result = new HashMap<String, String>();
 		
 	try {
 			
@@ -236,17 +252,24 @@ public class CheckResource {
 	    // 10분 마다 각 CPU 평균,최대값 DB update 
 	    if(Stat.usedCount == 1) {
 	    	ResourceStatusVo reStatusVo  = new ResourceStatusVo();
+	    	double cpuAvgUsed = Math.round(Stat.cpuUsed / 10 * 10) / 10.0 ; // 평균을 구하고 소수점 반올림 | 반올림 : Math.round(value * 10) / 10.0; 
 	    	reStatusVo.setRid(rid+"CPU");
 	    	reStatusVo.setSid(sid);
 	    	reStatusVo.setResType("CPU");
-	    	reStatusVo.setResAvg(Stat.cpuUsed / 10); 
+	    	reStatusVo.setResAvg(cpuAvgUsed); 
 	    	reStatusVo.setResPeak(Stat.cpuMaxUsed);
 	    	reStatusVo.setResPath("");
 	    	if(Stat.cpuUsed / 10 > cpuFail) { // CPU 평균 사용량이 임계치 이상이면 장애
 	    		reStatusVo.setResState("N");
-	    		result = false ;
+	    		result.put("status", "N");
+	    		result.put("limit", String.valueOf(cpuAvgUsed));
+	    		eventUtill.updateEvent(reStatusVo.getRid(), Constans.MSG_CPU_OVER.replace("xx", String.valueOf(reStatusVo.getResAvg())),"N");	    		
+	    		eventUtill.insertEventLog(reStatusVo.getRid(),Constans.MSG_CPU_OVER.replace("xx", String.valueOf(reStatusVo.getResAvg())),"N");
 	    	}else {
 	    		reStatusVo.setResState("Y");
+	    		result.put("status", "N");
+	    		result.put("limit", String.valueOf(cpuAvgUsed));
+//	    		eventUtill.deleteEvent(reStatusVo.getRid());
 	    	}
 	    	saveDbDao.updateResource(reStatusVo);
 	    	saveDbDao.updateResourceDay(reStatusVo);
@@ -262,8 +285,9 @@ public class CheckResource {
 	    log.info("CPU 사용량 체크 -----> " + cpuUsed+"% 사용중");
 	    
 		} catch (Exception e) {
+			result.put("status", "E");
 			e.printStackTrace();
-			return false;		
+			return result;		
 		}	
 		return result;
     }
@@ -274,9 +298,9 @@ public class CheckResource {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean checkDiskUsed(){
+	public List<ResourceStatusVo> checkDiskUsed(){
 		
-		boolean result = true ;
+		List<ResourceStatusVo> result = new ArrayList<ResourceStatusVo>();
 		
 	try {
 		
@@ -336,17 +360,21 @@ public class CheckResource {
 	    while ((line = bufferedReader.readLine()) != null) {	    	
 	    	if (line.contains("%")) {	    		
 	    		ResourceStatusVo disk = new ResourceStatusVo();
+	    		double diskAvgUsed = Math.round(Integer.valueOf(line.trim().replace("%", "")) / 10 * 10) / 10.0 ; // 평균을 구하고 소수점 반올림 | 반올림 : Math.round(value * 10) / 10.0; 
 	    		disk.setRid(diskList.get(num).getRid().trim());
 	    		disk.setSid(sid);
-	    		disk.setResAvg(Integer.valueOf(line.trim().replace("%", "")));
-	    		disk.setResPeak(Integer.valueOf(line.trim().replace("%", "")));
+	    		disk.setResAvg(Double.valueOf(diskAvgUsed));
+	    		disk.setResPeak(Double.valueOf(diskAvgUsed));
 	    		disk.setResDate(DateTime.nowDateHour());
 	    		disk.setResType("DISK");
+	    		disk.setResPath(diskList.get(num).getResPath());
 	    		if(Integer.valueOf(line.trim().replace("%", "")) > diskFail) { // 디스크 사용량이 임계치 이상이면 장애
 	    			disk.setResState("N");
-	    			result = false ;
+	    			eventUtill.updateEvent(disk.getRid(),Constans.MSG_DISK_OVER.replace("path", disk.getResPath()).replace("xx", String.valueOf(disk.getResAvg())),"N");
+	    			eventUtill.insertEventLog(disk.getRid(),Constans.MSG_DISK_OVER.replace("path", disk.getResPath()).replace("xx", String.valueOf(disk.getResAvg())),"N");		    		
 	    		}else {
 	    			disk.setResState("Y");
+	    			
 	    		}
 	    		diskUsed.add(disk);
 	    		num++;
@@ -362,6 +390,7 @@ public class CheckResource {
 	    }
 	    
 	    if(Stat.usedCount == 1) {
+	    	result=diskUsed;
 	    	saveDbDao.updateDiskList(diskUsed);
 	    	saveDbDao.updateDiskListDay(diskUsed);
 	    }
@@ -377,8 +406,8 @@ public class CheckResource {
 	    log.info("디스크 사용량 체크 -----> " + "End");
 	    
 		} catch (Exception e) {
-			e.printStackTrace();
-			return false;		
+			e.printStackTrace();			
+			return result;		
 		}	
 		return result;
     }

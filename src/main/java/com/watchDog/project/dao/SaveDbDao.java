@@ -6,9 +6,11 @@ import java.util.List;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
+import com.watchDog.project.model.EventDbVo;
 import com.watchDog.project.model.ProcStatusVo;
 import com.watchDog.project.model.ResourceStatusVo;
 import com.watchDog.project.model.ServerStatusVo;
+import com.watchDog.project.model.SmsUserDbVo;
 import com.watchDog.project.utill.DateTime;
 
 import lombok.extern.slf4j.Slf4j;
@@ -409,4 +411,92 @@ public class SaveDbDao {
 
 		return result;
 	}
+	
+	/**
+	 * SMS 발송 유저 목록 조회
+	 * @param sid
+	 * @return
+	 * @throws Exception
+	 */
+	public List<SmsUserDbVo> selectSmsUserList() {
+			
+			SqlSession session = sqlSessionFactory.openSession();
+			
+			List<SmsUserDbVo> result = new ArrayList<SmsUserDbVo>();
+			
+			try {
+				result = session.selectList("saveDb.selectSmsUserList");
+				session.commit();				
+			} catch (Exception e) {
+				session.rollback();
+			    log.error("SMS 발송 유저 목록 조회 중 예외 발생", e);	
+			}finally {								
+				 if (session != null) {
+					    session.close();
+					  }
+			}
+	
+			return result;
+		}
+
+	
+	/**
+	 * 이벤트 등록
+	 * @param procList
+	 * @return
+	 * @throws Exception
+	 */
+	public int updateEvent (EventDbVo eventDbVo) throws Exception{
+			
+			log.info("이벤트 등록 -----> " + "Start");
+		
+			int result = 0;
+						
+			SqlSession session = sqlSessionFactory.openSession();
+			
+			try {																														
+			     result = session.insert("saveDb.updateEvent", eventDbVo);				    				 					
+				 session.commit();
+				 log.info("이벤트 등록 결과 -----> " + result);				 
+			} catch (Exception e) {
+				session.rollback();
+			    log.error("이벤트 등록 중 예외 발생", e);
+			} finally {				
+				 if (session != null) {
+				    session.close();
+				  }
+			}
+			
+			return result;
+	}	
+	
+	/**
+	 * 이벤트 등록
+	 * @param procList
+	 * @return
+	 * @throws Exception
+	 */
+	public int insertEventLog (EventDbVo eventDbVo) throws Exception{
+			
+			log.info("이벤트 로그 등록 -----> " + "Start");
+		
+			int result = 0;
+								
+			SqlSession session = sqlSessionFactory.openSession();
+			
+			try {																														
+			     result = session.insert("saveDb.insertEventLog", eventDbVo);				    				 					
+				 session.commit();
+				 log.info("이벤트 로그 등록 -----> " + result);				 
+			} catch (Exception e) {
+				session.rollback();
+			    log.error("이벤트 로그 등록 중 예외 발생", e);
+			} finally {				
+				 if (session != null) {
+				    session.close();
+				  }
+			}
+			
+			return result;
+	}	
 }

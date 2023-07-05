@@ -11,6 +11,7 @@ public class DbConnectionFactory {
 	private static SqlSessionFactory chkDbSqlSessionFactory;
 	private static SqlSessionFactory saveDbSqlSessionFactory;
 	private static SqlSessionFactory smsDbSqlSessionFactory;
+	private static SqlSessionFactory eventDbSqlSessionFactory;
 	
 	public static SqlSessionFactory getChkDbSqlSessionFactory() {
 		
@@ -38,7 +39,15 @@ public class DbConnectionFactory {
 		
 		return smsDbSqlSessionFactory;
 	}
-	
+
+	public static SqlSessionFactory getDbEventSqlSessionFactory() {
+		
+		if (eventDbSqlSessionFactory == null) {
+			eventDbSqlSessionFactory = new DbConnectionFactory().createSession("config/eventDbConfig.xml");
+		}
+		
+		return smsDbSqlSessionFactory;
+	}
 
 	private SqlSessionFactory createSession(String path) {
 		
